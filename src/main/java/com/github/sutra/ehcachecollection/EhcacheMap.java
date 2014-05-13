@@ -73,46 +73,62 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 
 	}
 
-	private final class Entry<EK, EV> extends AbstractMap.SimpleEntry<EK, EV> {
+	private final class Entry extends AbstractMap.SimpleEntry<K, V> {
+
 		private static final long serialVersionUID = 2014051301L;
 
-		/**
-		 *
-		 */
-		public Entry(EK key, EV value) {
+		public Entry(K key, V value) {
 			super(key, value);
 		}
 
 		/**
 		 * {@inheritDoc}
 		 */
-		public EV setValue(EV value) {
+		public V setValue(V value) {
 			super.setValue(value);
 
-			EK key = getKey();
+			K key = getKey();
 			Element element = cache.get(key);
 			@SuppressWarnings("unchecked")
-			EV previousValue = element != null ? (EV) element.getObjectValue() : null;
+			V previousValue = element != null ? (V) element.getObjectValue() : null;
 			cache.put(new Element(key, value));
 			return previousValue;
 		}
 
 	}
 
-	private final class EntrySet<E> extends AbstractSet<E>  {
-
-		private Set<E> set;
-
-		public EntrySet(Set<E> set) {
-			this.set = set;
-		}
+	private final class EntrySet extends AbstractSet<Map.Entry<K, V>>  {
 
 		/**
 		 * {@inheritDoc}
 		 */
 		@Override
-		public Iterator<E> iterator() {
-			return set.iterator();
+		public Iterator<Map.Entry<K, V>> iterator() {
+
+			final Iterator<K> keyIterator = EhcacheMap.this.keySet().iterator();
+
+			return new Iterator<Map.Entry<K, V>>() {
+
+				private Map.Entry<K, V> currentEntry;
+
+				@Override
+				public boolean hasNext() {
+					return keyIterator.hasNext();
+				}
+
+				@Override
+				public Map.Entry<K, V> next() {
+					final K key = keyIterator.next();
+					final V value = get(key);
+					currentEntry = new Entry(key, value);
+					return currentEntry;
+				}
+
+				@Override
+				public void remove() {
+					EhcacheMap.this.remove(currentEntry.getKey());
+				}
+			};
 		}
 
 		/**
@@ -120,7 +136,7 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 		 */
 		@Override
 		public int size() {
-			return set.size();
+			return cache.getSize();
 		}
 
 		/**
@@ -275,16 +291,8 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 	/**
 	 * {@inheritDoc}
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Set<Map.Entry<K, V>> entrySet() {
-		HashSet<Map.Entry<K, V>> entrySet = new HashSet<Map.Entry<K, V>>();
-		List keys = cache.getKeys();
-
-		for (final Object key : keys) {
-			entrySet.add(new Entry(key, get(key)));
-		}
-
-		return new EntrySet<Map.Entry<K, V>>(entrySet);
+		return new EntrySet();
 	}
 
 	/**

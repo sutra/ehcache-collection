@@ -91,6 +91,7 @@ public class EhcacheMapTest {
 	private void testEntrySet(Map<String, String> map) {
 		map.put("1-key", "1-value");
 		Set<Map.Entry<String, String>> entrySet = map.entrySet();
+		assertEquals(1, entrySet.size());
 		assertTrue(map.containsKey("1-key"));
 		Map.Entry<String, String> entry = entrySet.iterator().next();
 
@@ -103,6 +104,7 @@ public class EhcacheMapTest {
 		map.put("2-key", "2-value");
 		assertFalse(map.isEmpty());
 		entrySet.clear();
+		assertEquals(0, entrySet.size());
 		assertTrue(map.isEmpty());
 
 		try {
