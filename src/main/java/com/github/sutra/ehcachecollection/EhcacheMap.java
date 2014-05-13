@@ -18,7 +18,9 @@ import net.sf.ehcache.Element;
 /**
  * <a href="http://ehcache.org">Ehcache</a> based implementation of the
  * {@link Map} interface.
- * 
+ *
+ * <p>Does not support null key, but supports null values.</p>
+ *
  * @author Sutra Zhou
  */
 public class EhcacheMap<K extends Serializable, V extends Serializable>

@@ -62,10 +62,22 @@ public class EhcacheMapTest {
 
 	@Test
 	public void testEhcacheMap() {
+		comparisonMap.put("a", "A");
 		em.put("a", "A");
+		assertEquals("A", comparisonMap.get("a"));
 		assertEquals("A", em.get("a"));
 
+		assertEquals(1, comparisonMap.size());
 		assertEquals(1, em.size());
+
+		comparisonMap.put("null", null);
+		em.put("null", null);
+
+		comparisonMap.put(null, null);
+		em.put(null, null);
+
+		assertEquals(3, comparisonMap.size());
+		assertEquals(2, em.size()); // null keys does not support.
 	}
 
 	@Test
