@@ -5,6 +5,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,8 +19,6 @@ import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
-
-import com.github.sutra.ehcachecollection.EhcacheMap;
 
 /**
  * @author Sutra Zhou
@@ -112,6 +117,47 @@ public class EhcacheMapTest {
 		assertFalse(map.isEmpty());
 		map.clear();
 		assertTrue(map.isEmpty());
+	}
+
+	@Test
+	public void testEqualsHashCode() {
+		this.testEqualsHashCode(comparisonMap);
+
+		this.testEqualsHashCode(em);
+	}
+
+	private void testEqualsHashCode(Map<String, String> map) {
+		Map<String, String> expected = new HashMap<String, String>();
+		map.put("1-key", "1-value");
+		expected.put("1-key", "1-value");
+
+		assertTrue(expected.equals(map));
+		assertEquals(expected.hashCode(), map.hashCode());
+	}
+
+	@Test
+	public void testSerializable() throws IOException, ClassNotFoundException {
+		this.testSerializable(comparisonMap);
+
+		this.testSerializable(em);
+	}
+
+	private void testSerializable(Map<String, String> map) throws IOException,
+			ClassNotFoundException {
+		map.put("1-key", "1-value");
+
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ObjectOutput oo = new ObjectOutputStream(baos);
+		oo.writeObject(map);
+		oo.close();
+
+		ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+		ObjectInput oi = new ObjectInputStream(bais);
+		@SuppressWarnings("unchecked")
+		Map<String, String> actual = (Map<String, String>) oi.readObject();
+		assertEquals(map.size(), actual.size());
+		assertEquals("1-value", actual.get("1-key"));
+		assertEquals(map, actual);
 	}
 
 }

@@ -25,11 +25,11 @@ public class EhcacheList<E extends Serializable> extends AbstractList<E>
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = -5397536041485685485L;
+	private static final long serialVersionUID = 2014051301L;
 
-	private transient IntList keys;
+	private IntList keys;
 
-	private transient EhcacheMap<Integer, E> map;
+	private EhcacheMap<Integer, E> map;
 
 	/**
 	 *

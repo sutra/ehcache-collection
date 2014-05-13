@@ -2,6 +2,7 @@ package com.github.sutra.ehcachecollection;
 
 import java.io.Serializable;
 import java.util.AbstractCollection;
+import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,12 +24,13 @@ import net.sf.ehcache.Element;
  * @author Sutra Zhou
  */
 public class EhcacheMap<K extends Serializable, V extends Serializable>
+		extends AbstractMap<K, V>
 		implements Map<K, V>, Serializable {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = -7020961104387724170L;
+	private static final long serialVersionUID = 2014051301L;
 
 	private final class KeySet<E> extends AbstractSet<E>  {
 
@@ -72,38 +74,23 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 
 	}
 
-	private final class Entry<EK, EV> implements Map.Entry<EK, EV> {
-		private final EK key;
-		private EV value;
+	private final class Entry<EK, EV> extends AbstractMap.SimpleEntry<EK, EV> {
+		private static final long serialVersionUID = 2014051301L;
 
 		/**
 		 *
 		 */
 		public Entry(EK key, EV value) {
-			this.key = key;
-			this.value = value;
-		}
-
-		/**
-		 * {@inheritDoc}
-		 */
-		public EK getKey() {
-			return key;
-		}
-
-		/**
-		 * {@inheritDoc}
-		 */
-		public EV getValue() {
-			return value;
+			super(key, value);
 		}
 
 		/**
 		 * {@inheritDoc}
 		 */
 		public EV setValue(EV value) {
-			this.value = value;
+			super.setValue(value);
 
+			EK key = getKey();
 			Element element = cache.get(key);
 			@SuppressWarnings("unchecked")
 			EV previousValue = element != null ? (EV) element.getObjectValue() : null;
@@ -217,7 +204,9 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 
 	}
 
-	private final Ehcache cache;
+	private final String cacheName;
+
+	private transient Ehcache cache;
 
 	/**
 	 * Constructs a EhcacheMap using the default cache.
@@ -226,19 +215,13 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 		this(Cache.DEFAULT_CACHE_NAME);
 	}
 
-	/**
-	 *
-	 */
 	public EhcacheMap(String cacheName) {
-		CacheManager cacheManager = CacheManager.create();
-		cache = cacheManager.getCache(cacheName);
-		if (cache == null) {
-			throw new NullPointerException("Cache \"" + cacheName
-					+ "\" does not exist.");
-		}
+		this.cacheName = cacheName;
+		this.cache = getCache(cacheName);
 	}
 
 	public EhcacheMap(Ehcache cache) {
+		this.cacheName = cache.getName();
 		this.cache = cache;
 	}
 
@@ -350,6 +333,27 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 			values.add(get(key));
 		}
 		return new Values(values);
+	}
+
+	/**
+	 * Returns the cache with the specified name.
+	 *
+	 * @param cacheName the cache name.
+	 * @return the cache with the specifie name.
+	 */
+	private Ehcache getCache(String cacheName) {
+		CacheManager cacheManager = CacheManager.create();
+		Ehcache cache = cacheManager.getCache(cacheName);
+		if (cache == null) {
+			throw new NullPointerException("Cache \"" + cacheName
+					+ "\" does not exist.");
+		}
+		return cache;
+	}
+
+	private Object readResolve() {
+		this.cache = getCache(cacheName);
+		return this;
 	}
 
 }

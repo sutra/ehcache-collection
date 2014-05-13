@@ -22,9 +22,9 @@ public class EhcacheSet<E extends Serializable> extends AbstractSet<E>
 
 	}
 
-	private static final long serialVersionUID = -3327815800474989254L;
+	private static final long serialVersionUID = 2014051301L;
 
-	private transient EhcacheMap<E, Serializable> map;
+	private final EhcacheMap<E, Serializable> map;
 
 	// Dummy value to associate with an Object in the backing Map
 	private static final Serializable PRESENT = new DummyObject();

@@ -19,11 +19,11 @@ import org.apache.commons.collections.primitives.IntList;
  */
 public class LinkedEhcacheSet<E extends Serializable> extends AbstractSet<E> implements Serializable {
 
-	private static final long serialVersionUID = 797149056791646702L;
+	private static final long serialVersionUID = 2013051301L;
 
-	private IntList keys;
+	private final IntList keys;
 
-	private transient EhcacheMap<Integer, E> map;
+	private final EhcacheMap<Integer, E> map;
 
 	/**
 	 * @param cacheName
