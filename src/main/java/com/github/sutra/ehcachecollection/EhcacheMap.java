@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.AbstractMap;
 import java.util.AbstractSet;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -12,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
@@ -27,9 +25,6 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 		extends AbstractMap<K, V>
 		implements Map<K, V>, Serializable {
 
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 2014051301L;
 
 	private final class KeySet<E> extends AbstractSet<E>  {
@@ -136,7 +131,7 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 		 */
 		@Override
 		public int size() {
-			return cache.getSize();
+			return EhcacheMap.this.size();
 		}
 
 		/**
@@ -161,23 +156,35 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 
 	}
 
-	private final class Values<E, EK, EV> extends AbstractCollection<E> {
-
-		private Collection<E> collection;
-
-		/**
-		 *
-		 */
-		public Values(Collection<E> collection) {
-			this.collection = collection;
-		}
+	private final class Values extends AbstractCollection<V> {
 
 		/**
 		 * {@inheritDoc}
 		 */
 		@Override
-		public Iterator<E> iterator() {
-			return collection.iterator();
+		public Iterator<V> iterator() {
+			final Iterator<K> keyIterator = EhcacheMap.this.keySet().iterator();
+
+			return new Iterator<V>() {
+
+				private K currentKey;
+
+				@Override
+				public boolean hasNext() {
+					return keyIterator.hasNext();
+				}
+
+				@Override
+				public V next() {
+					currentKey = keyIterator.next();
+					return EhcacheMap.this.get(currentKey);
+				}
+
+				@Override
+				public void remove() {
+					EhcacheMap.this.remove(currentKey);
+				}
+			};
 		}
 
 		/**
@@ -185,7 +192,7 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 		 */
 		@Override
 		public int size() {
-			return collection.size();
+			return EhcacheMap.this.size();
 		}
 
 		/**
@@ -205,7 +212,7 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 				EhcacheMap.this.remove(key);
 			}
 
-			return collection.remove(obj);
+			return keysToRemove.size() > 0;
 		}
 
 		/**
@@ -222,13 +229,6 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 	private final String cacheName;
 
 	private transient Ehcache cache;
-
-	/**
-	 * Constructs a EhcacheMap using the default cache.
-	 */
-	public EhcacheMap() {
-		this(Cache.DEFAULT_CACHE_NAME);
-	}
 
 	public EhcacheMap(String cacheName) {
 		this.cacheName = cacheName;
@@ -331,14 +331,8 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 	/**
 	 * {@inheritDoc}
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Collection<V> values() {
-		List keys = cache.getKeys();
-		Collection values = new ArrayList(size());
-		for (Object key : keys) {
-			values.add(get(key));
-		}
-		return new Values(values);
+		return new Values();
 	}
 
 	/**

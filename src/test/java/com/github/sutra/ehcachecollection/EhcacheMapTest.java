@@ -2,6 +2,7 @@ package com.github.sutra.ehcachecollection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -12,10 +13,15 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Ehcache;
 
 import org.junit.After;
 import org.junit.Before;
@@ -39,6 +45,19 @@ public class EhcacheMapTest {
 	@After
 	public void tearDown() {
 		em.clear();
+	}
+
+	@Test
+	public void testConstructor() {
+		CacheManager cacheManager = CacheManager.create();
+		Ehcache cache = cacheManager.getCache(getClass().getName());
+		new EhcacheMap<Serializable, Serializable>(cache);
+
+		try {
+			new EhcacheMap<Serializable, Serializable>("");
+			fail("NullPointerException should be thrown.");
+		} catch (NullPointerException e) {
+		}
 	}
 
 	@Test
@@ -95,11 +114,19 @@ public class EhcacheMapTest {
 		assertTrue(map.containsKey("1-key"));
 		Map.Entry<String, String> entry = entrySet.iterator().next();
 
-		entry.setValue("1-new-value");
+		entry.setValue("1-value"); // old value
+		assertEquals("1-value", map.get("1-key"));
+
+		entry.setValue("1-new-value"); // new value
 		assertEquals("1-new-value", map.get("1-key"));
 
 		entrySet.remove(entrySet.iterator().next());
 		assertFalse(map.containsKey("1-key"));
+
+		assertTrue(map.isEmpty());
+		if (map instanceof EhcacheMap) {
+			assertNull(entry.setValue("1-value")); // when set then entry has been removed
+		}
 
 		map.put("2-key", "2-value");
 		assertFalse(map.isEmpty());
@@ -112,6 +139,14 @@ public class EhcacheMapTest {
 			fail("UnsupprotedOperationException should be thrown.");
 		} catch (UnsupportedOperationException ex) {
 		}
+
+		map.put("1-key", "1-value");
+		Iterator<Map.Entry<String, String>> iterator = entrySet.iterator();
+		while (iterator.hasNext()) {
+			iterator.next();
+			iterator.remove();
+		}
+		assertTrue(map.isEmpty());
 	}
 
 	@Test
@@ -123,15 +158,42 @@ public class EhcacheMapTest {
 
 	private void testValues(Map<String, String> map) {
 		map.put("1-key", "1-value");
-		map.put("2-key", "2-value");
-		map.put("3-key", "3-value");
-		Collection<String> values = map.values();
-		assertTrue(map.containsKey("1-key"));
-		values.remove("1-value");
-		assertFalse(map.containsKey("1-key"));
 
+		Map<String, String> toPut = new HashMap<String, String>();
+		toPut.put("2-key", "2-value");
+		toPut.put("3-key", "3-value");
+
+		map.putAll(toPut);
+
+		Collection<String> values = map.values();
+		assertEquals(3, values.size());
+		assertEquals("1-value", map.get("1-key"));
+		assertEquals("2-value", map.get("2-key"));
+		assertEquals("3-value", map.get("3-key"));
+		assertTrue(map.containsKey("1-key"));
+		assertTrue(map.containsKey("2-key"));
+		assertTrue(map.containsKey("3-key"));
+		assertTrue(map.containsValue("1-value"));
+		assertTrue(map.containsValue("3-value"));
+		assertTrue(map.containsValue("3-value"));
+
+		assertTrue(values.remove("1-value"));
+		assertNull(map.get("1-key"));
+		assertFalse(map.containsKey("1-key"));
+		assertFalse(map.containsValue("1-value"));
+		assertFalse(values.remove("1-value")); // remove again
+
+		Iterator<String> iterator = values.iterator();
+		while (iterator.hasNext()) {
+			iterator.next();
+			iterator.remove();
+		}
+		assertTrue(values.isEmpty());
+		assertTrue(map.isEmpty());
+
+		map.put("1-key", "1-value");
 		assertFalse(map.isEmpty());
-		map.clear();
+		values.clear();
 		assertTrue(map.isEmpty());
 	}
 
