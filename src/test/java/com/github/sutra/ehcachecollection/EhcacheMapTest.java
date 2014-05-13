@@ -142,6 +142,13 @@ public class EhcacheMapTest {
 
 		map.put("1-key", "1-value");
 		Iterator<Map.Entry<String, String>> iterator = entrySet.iterator();
+
+		try {
+			iterator.remove();
+			fail("IllegalStateException should be thrown.");
+		} catch (IllegalStateException e) {
+		}
+
 		while (iterator.hasNext()) {
 			iterator.next();
 			iterator.remove();
@@ -184,6 +191,13 @@ public class EhcacheMapTest {
 		assertFalse(values.remove("1-value")); // remove again
 
 		Iterator<String> iterator = values.iterator();
+
+		try {
+			iterator.remove();
+			fail("IllegalStateException should be thrown.");
+		} catch (IllegalStateException e) {
+		}
+
 		while (iterator.hasNext()) {
 			iterator.next();
 			iterator.remove();

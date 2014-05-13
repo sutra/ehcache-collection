@@ -121,6 +121,9 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 
 				@Override
 				public void remove() {
+					if (currentEntry == null) {
+						throw new IllegalStateException();
+					}
 					EhcacheMap.this.remove(currentEntry.getKey());
 				}
 			};
@@ -182,6 +185,9 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 
 				@Override
 				public void remove() {
+					if (currentKey == null) {
+						throw new IllegalStateException();
+					}
 					EhcacheMap.this.remove(currentKey);
 				}
 			};
