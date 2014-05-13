@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,10 +36,17 @@ public class EhcacheMapTest {
 		comparisonMap  = new HashMap<String, String>();
 	}
 
+	@After
+	public void tearDown() {
+		em.clear();
+	}
+
 	@Test
 	public void testEhcacheMap() {
 		em.put("a", "A");
 		assertEquals("A", em.get("a"));
+
+		assertEquals(1, em.size());
 	}
 
 	@Test
@@ -51,13 +59,19 @@ public class EhcacheMapTest {
 	private void testKeySet(Map<String, String> map) {
 		map.put("1-key", "1-value");
 		Set<String> keySet = map.keySet();
+		assertEquals(1, keySet.size());
 		assertTrue(map.containsKey("1-key"));
+
 		keySet.remove("1-key");
+		assertEquals(0, keySet.size());
 		assertFalse(map.containsKey("1-key"));
 
 		map.put("2-key", "2-value");
+		assertEquals(1, keySet.size());
 		assertFalse(map.isEmpty());
+
 		keySet.clear();
+		assertEquals(0, keySet.size());
 		assertTrue(map.isEmpty());
 
 		try {

@@ -34,18 +34,12 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 
 	private final class KeySet<E> extends AbstractSet<E>  {
 
-		private List<E> list;
-
-		public KeySet(List<E> list) {
-			this.list = list;
-		}
-
 		/**
 		 * {@inheritDoc}
 		 */
 		@Override
 		public Iterator<E> iterator() {
-			return list.iterator();
+			return getKeys().iterator();
 		}
 
 		/**
@@ -53,7 +47,7 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 		 */
 		@Override
 		public int size() {
-			return list.size();
+			return getKeys().size();
 		}
 
 		/**
@@ -70,6 +64,11 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 		@Override
 		public void clear() {
 			EhcacheMap.this.clear();
+		}
+
+		@SuppressWarnings("unchecked")
+		private List<E> getKeys() {
+			return cache.getKeys();
 		}
 
 	}
@@ -269,9 +268,8 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 	/**
 	 * {@inheritDoc}
 	 */
-	@SuppressWarnings({ "unchecked" })
 	public Set<K> keySet() {
-		return new KeySet<K>(cache.getKeys());
+		return new KeySet<K>();
 	}
 
 	/**
