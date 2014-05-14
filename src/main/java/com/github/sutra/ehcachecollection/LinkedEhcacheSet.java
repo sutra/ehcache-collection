@@ -59,11 +59,16 @@ public class LinkedEhcacheSet<E extends Serializable> extends AbstractSet<E> imp
 
 			public E next() {
 				int key = keyIterator.next();
-				return map.get(key);
+				currentElement = map.get(key);
+				return currentElement;
 			}
 
 			public void remove() {
+				if (currentElement == null) {
+					throw new IllegalStateException();
+				}
 				LinkedEhcacheSet.this.remove(currentElement);
+				currentElement = null;
 			}
 		};
 		return iterator;
