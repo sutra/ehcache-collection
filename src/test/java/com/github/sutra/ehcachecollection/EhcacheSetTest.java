@@ -1,7 +1,7 @@
 package com.github.sutra.ehcachecollection;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -11,9 +11,13 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+
+import net.sf.ehcache.CacheManager;
+import net.sf.ehcache.Ehcache;
 
 import org.junit.After;
 import org.junit.Before;
@@ -24,13 +28,15 @@ import org.junit.Test;
  */
 public class EhcacheSetTest {
 
+	private static final String CACHE_NAME = EhcacheSetTest.class.getName();
+
 	private EhcacheSet<String> es;
 
 	private Set<String> comparisonSet;
 
 	@Before
 	public void setUp() {
-		es = new EhcacheSet<String>(getClass().getName());
+		es = new EhcacheSet<String>(CACHE_NAME);
 		comparisonSet = new HashSet<String>();
 	}
 
@@ -40,15 +46,34 @@ public class EhcacheSetTest {
 	}
 
 	@Test
-	public void testEhcacheSet() {
-		EhcacheSet<MyObject> es = new EhcacheSet<MyObject>(getClass().getName());
-		MyObject area = new MyObject("areaName");
-		es.add(area);
-		assertEquals(area, es.iterator().next());
-		assertEquals(area, es.toArray()[0]);
+	public void testConstructor() {
+		new EhcacheSet<Serializable>(CACHE_NAME);
 
-		assertEquals(area.getName(), new ArrayList<MyObject>(es).get(0).getName());
-		assertNotNull(new ArrayList<MyObject>(es).get(0).getName());
+		CacheManager cacheManager = CacheManager.create();
+		Ehcache cache = cacheManager.getCache(CACHE_NAME);
+		new EhcacheSet<Serializable>(cache);
+	}
+
+	@Test
+	public void testEhcacheSet() {
+		assertTrue(es.isEmpty());
+		assertFalse(es.contains("1-value"));
+		assertFalse(es.remove("1-value"));
+
+		assertTrue(es.add("1-value"));
+		assertFalse(es.add("1-value")); // add twice
+
+		assertFalse(es.isEmpty());
+		assertEquals("1-value", es.iterator().next());
+		assertEquals("1-value", es.toArray()[0]);
+
+		assertEquals("1-value", new ArrayList<String>(es).get(0));
+
+		assertTrue(es.contains("1-value"));
+		assertTrue(es.remove("1-value"));
+		assertTrue(es.isEmpty());
+		assertFalse(es.contains("1-value"));
+		assertFalse(es.remove("1-value")); // remove again
 	}
 
 	@Test

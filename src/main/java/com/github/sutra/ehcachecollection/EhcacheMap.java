@@ -307,8 +307,9 @@ public class EhcacheMap<K extends Serializable, V extends Serializable>
 	 * {@inheritDoc}
 	 */
 	public V put(K key, V value) {
+		final V oldValue = get(key);
 		cache.put(new Element(key, value));
-		return value;
+		return oldValue;
 	}
 
 	/**

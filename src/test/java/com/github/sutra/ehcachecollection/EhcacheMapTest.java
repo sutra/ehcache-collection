@@ -32,13 +32,15 @@ import org.junit.Test;
  */
 public class EhcacheMapTest {
 
+	private static final String CACHE_NAME = EhcacheMapTest.class.getName();
+
 	private EhcacheMap<String, String> em;
 
 	private Map<String, String> comparisonMap;
 
 	@Before
 	public void setUp() {
-		em = new EhcacheMap<String, String>(getClass().getName());
+		em = new EhcacheMap<String, String>(CACHE_NAME);
 		comparisonMap  = new HashMap<String, String>();
 	}
 
@@ -50,7 +52,7 @@ public class EhcacheMapTest {
 	@Test
 	public void testConstructor() {
 		CacheManager cacheManager = CacheManager.create();
-		Ehcache cache = cacheManager.getCache(getClass().getName());
+		Ehcache cache = cacheManager.getCache(CACHE_NAME);
 		new EhcacheMap<Serializable, Serializable>(cache);
 
 		try {
@@ -82,9 +84,8 @@ public class EhcacheMapTest {
 
 	@Test
 	public void testKeySet() {
-		this.testKeySet(comparisonMap);
-
-		this.testKeySet(em);
+		testKeySet(comparisonMap);
+		testKeySet(em);
 	}
 
 	private void testKeySet(Map<String, String> map) {
@@ -114,9 +115,8 @@ public class EhcacheMapTest {
 
 	@Test
 	public void testEntrySet() {
-		this.testEntrySet(comparisonMap);
-
-		this.testEntrySet(em);
+		testEntrySet(comparisonMap);
+		testEntrySet(em);
 	}
 
 	private void testEntrySet(Map<String, String> map) {
@@ -169,9 +169,19 @@ public class EhcacheMapTest {
 	}
 
 	@Test
+	public void testPut() {
+		testPut(comparisonMap);
+		testPut(em);
+	}
+
+	private void testPut(Map<String, String> map) {
+		assertNull(map.put("1-key", "1-value"));
+		assertEquals("1-value", map.put("1-key", "2-value"));
+	}
+
+	@Test
 	public void testValues() {
 		this.testValues(comparisonMap);
-
 		this.testValues(em);
 	}
 
