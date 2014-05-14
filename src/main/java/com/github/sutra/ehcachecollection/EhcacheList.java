@@ -139,20 +139,12 @@ public class EhcacheList<E extends Serializable> extends AbstractList<E>
 	 */
 	@Override
 	public int indexOf(Object o) {
-		IntIterator ii = keys.iterator();
-		int key;
-		Object e;
-		int index = -1;
-		while (ii.hasNext()) {
-			key = ii.next();
-			e = map.get(key);
-			if (!e.equals(o)) {
-				index++;
-			} else {
-				break;
+		for (int i = 0, l = keys.size(); i < l; i++) {
+			if (o.equals(map.get(keys.get(i)))) {
+				return i;
 			}
 		}
-		return index;
+		return -1;
 	}
 
 	/**
@@ -160,22 +152,26 @@ public class EhcacheList<E extends Serializable> extends AbstractList<E>
 	 */
 	@Override
 	public Iterator<E> iterator() {
-		final IntIterator ii = keys.iterator();
 		Iterator<E> iterator = new Iterator<E>() {
-			private int currentKey;
+			private int cursor = 0;   // index of next element to return
+			private int lastRet = -1; // index of last element returned; -1 if no such
 
 			public boolean hasNext() {
-				return ii.hasNext();
+				return cursor != EhcacheList.this.size();
 			}
 
 			public E next() {
-				currentKey = ii.next();
+				int currentKey = keys.get(cursor);
+				lastRet = cursor;
+				cursor++;
 				return map.get(currentKey);
 			}
 
 			public void remove() {
+				int currentKey = keys.get(lastRet);
 				keys.removeElement(currentKey);
 				map.remove(currentKey);
+				cursor--;
 			}
 
 		};
@@ -205,11 +201,21 @@ public class EhcacheList<E extends Serializable> extends AbstractList<E>
 	 */
 	@Override
 	public E set(int index, E element) {
+		final E oldElement;
+
 		int oldKey = keys.get(index);
-		E oldElement = map.remove(oldKey);
 
 		int newKey = element.hashCode();
 		keys.set(index, newKey);
+
+		if (!keys.contains(oldKey)) {
+			// Remove only if no key is pointing to it
+
+			oldElement = map.remove(oldKey);
+		} else {
+			oldElement = map.get(oldKey);
+		}
+
 		map.put(newKey, element);
 
 		return oldElement;
